@@ -3,7 +3,7 @@ name: Desplegament Angular
 on:
   push:
     branches:
-      - main 
+      - main
 
 jobs:
   build:
@@ -19,13 +19,17 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          cd exemples-dwec/09-angular/2425/myrecipes  # Move to correct directory
+          npm install
 
       - name: Build Angular app
-        run: npm run build -- --output-path=dist --base-href="/ProjecteFinal/"
+        run: |
+          cd exemples-dwec/09-angular/2425/myrecipes
+          npm run build -- --output-path=dist --base-href="/ProjecteFinal/"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: dist
+          folder: exemples-dwec/09-angular/2425/myrecipes/dist
