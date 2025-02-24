@@ -9,6 +9,7 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { CreateRecipeComponent } from './recipes/create-recipe/create-recipe.component';
 import { supabaseLoginGuard } from './guards/supabase-login.guard';
+import { LogoutComponent } from './components/logout/logout.component';
 
 export const routes: Routes = [
     {path: 'home', component: HomeComponent},
@@ -21,6 +22,7 @@ export const routes: Routes = [
     {path: 'sharedrecipes/:id', component: SharedRecipesComponent},
     {path: 'login', component: LoginComponent},
     {path: 'register', component: RegisterComponent},
+    {path: 'logout', component: LogoutComponent},
     {path: '**', pathMatch: 'full', redirectTo: 'home'}
 
 ];

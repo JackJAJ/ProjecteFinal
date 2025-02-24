@@ -92,4 +92,44 @@ export class RegisterComponent {
       )
     }*/
 
+    sendRegister() {
+      console.log("Intentant registrar...");
+    
+      if (this.registerForm.invalid) {
+        console.warn("El formulari no és vàlid!", this.registerForm.value);
+        alert("Revisa els camps i torna-ho a intentar!");
+        return;
+      }
+    
+      const email = this.registerForm.get('email')?.value;
+      const password = this.registerForm.get('passwords.password')?.value;
+    
+      console.log("Correu electrònic enviat:", email);
+      console.log("Contrasenya enviada:", password);
+    
+      if (!email || !password) {
+        console.warn("Falta el correu electrònic o la contrasenya!");
+        return;
+      }
+    
+      this.supaService.client.auth.signUp({ email, password })
+        .then(({ data, error }) => {
+          console.log("Resposta de Supabase:", { data, error });
+    
+          if (error) {
+            console.error("Error en el registre:", error);
+            this.error = error.message;
+            alert("Error: " + error.message);
+          } else {
+            console.log("Usuari registrat correctament:", data);
+            alert("Registre realitzat amb èxit!");
+          }
+        })
+        .catch(err => {
+          console.error("Error inesperat:", err);
+          this.error = err.message;
+          alert("Error inesperat: " + err.message);
+        });
+    }
+      
 }

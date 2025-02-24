@@ -1,5 +1,5 @@
 <div class="container">
-  <form [formGroup]="mealForm">
+  <form [formGroup]="mealForm" (ngSubmit)="submitRecipe()">
     <div class="mb-3">
       <label for="strMeal" class="form-label">Nom</label>
       <input
@@ -41,12 +41,13 @@
             'is-invalid': ingredient.invalid && ingredient.touched
           }"
         />
-        <button class="btn btn-outline-danger" (click)="delIngredient($index)">
+        <button type="button" class="btn btn-outline-danger" (click)="delIngredient($index)">
           Borrar
         </button>
+        
       </div>
       }
-      <button class="btn btn-primary" (click)="addIngredient()">
+      <button type="button" class="btn btn-primary" (click)="addIngredient()">
         Afegir Ingredient
       </button>
     </div>

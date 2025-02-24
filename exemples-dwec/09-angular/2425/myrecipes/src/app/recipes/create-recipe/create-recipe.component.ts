@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
 import {
   FormArray,
   FormBuilder,
@@ -17,12 +19,15 @@ import { SupabaseService } from '../../services/supabase.service';
   styleUrl: './create-recipe.component.css',
 })
 export class CreateRecipeComponent implements OnInit {
+[x: string]: any;
   @Input('id') recipeID?: string;
   mealForm: FormGroup;
 
   constructor(
     private supaService: SupabaseService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private route: ActivatedRoute,
+    private router: Router 
   ) {
     this.mealForm = this.formBuilder.group({
       strMeal: ['', [Validators.required]],
@@ -39,6 +44,12 @@ export class CreateRecipeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
+    if (!this.recipeID) {
+      const idFromRoute = this.route.snapshot.paramMap.get('id');
+      this.recipeID = idFromRoute ? idFromRoute : undefined;
+    }
+
     if (this.recipeID) {
       // falta demanar tots els ingredients (id, nom)
       this.supaService.getMeals(this.recipeID).subscribe({
@@ -57,6 +68,8 @@ export class CreateRecipeComponent implements OnInit {
         complete: () => console.log('Received'),
       });
     }
+    
+
   }
 
   getIngredientControl(): FormControl {
@@ -83,4 +96,37 @@ export class CreateRecipeComponent implements OnInit {
   delIngredient(i: number) {   
     (<FormArray>this.mealForm.get('ingredients')).removeAt(i);
   }
+
+  async submitRecipe() {
+    if (this.mealForm.invalid) {
+      alert("Please fill in all fields.");
+      return;
+    }
+  
+    const recipeData: any = {
+      idMeal: this.recipeID || undefined,
+      strMeal: this.mealForm.value.strMeal,
+      strInstructions: this.mealForm.value.strInstructions,
+      idIngredients: this.mealForm.value.ingredients
+    };
+  
+    try {
+      if (this.recipeID) {
+        await this.supaService.deleteRemovedIngredients(this.recipeID, recipeData.idIngredients);
+
+        await this.supaService.updateRecipe(this.recipeID, recipeData);
+        alert("Recipe updated successfully!");
+      } else {
+        await this.supaService.addRecipe(recipeData);
+        alert("Recipe created successfully!");
+        this.mealForm.reset();
+      }
+  
+      this.router.navigate(['/table']);
+    } catch (error) {
+      console.error("Error saving recipe:", error);
+      alert("Error saving recipe.");
+    }
+  }
+  
 }

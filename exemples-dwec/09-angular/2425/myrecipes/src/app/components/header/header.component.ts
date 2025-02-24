@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -8,7 +8,7 @@ import { debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-header',
-  imports: [RouterLink, RouterLinkActive, ReactiveFormsModule, CommonModule],
+  imports: [RouterModule, RouterLink, RouterLinkActive, ReactiveFormsModule, CommonModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -20,7 +20,8 @@ export class HeaderComponent implements OnInit{
   constructor(
     private supaService: SupabaseService,
     private formBuilder: FormBuilder,
-    private searchService: SearchServiceService
+    private searchService: SearchServiceService,
+    private router: Router
   ){
     this.searchForm = this.formBuilder.group({
       searchInput: [''],
@@ -41,6 +42,18 @@ export class HeaderComponent implements OnInit{
 
   }
 
-
+  async logout() {
+    this.supaService.logout().subscribe({
+      next: () => {
+        this.logged = false;
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error("Logout error:", err.message);
+        alert("Error logging out.");
+      }
+    });
+  }
+  
 
 }

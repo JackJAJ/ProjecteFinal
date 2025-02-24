@@ -36,6 +36,83 @@ export class SupabaseService {
     );
   }
 
+  get client() {
+    return this.supabase;
+  }
+
+  async addRecipe(recipe: any) {
+    const recipeData = {
+      idMeal: recipe.idMeal || crypto.randomUUID(),
+      strMeal: recipe.strMeal,
+      strInstructions: recipe.strInstructions
+    };
+  
+    const { data, error } = await this.supabase
+      .from('meals') 
+      .insert([recipeData]);
+  
+    if (error) throw error;
+  
+    if (recipe.idIngredients && recipe.idIngredients.length > 0) {
+      await this.supabase
+        .from('recipe_ingredients')
+        .insert(recipe.idIngredients.map((ingredientId: string) => ({
+          recipe_id: recipeData.idMeal,
+          ingredient_id: ingredientId
+        })));
+    }
+  
+    return data;
+  }
+  
+  
+  async updateRecipe(id: string, updates: any) {
+    const { data, error } = await this.supabase
+      .from('meals')
+      .update(updates)
+      .eq('idMeal', id);
+  
+    if (error) throw error;
+    return data;
+  }
+  
+  async deleteRemovedIngredients(recipeID: string, updatedIngredients: string[]) {
+    const { data: currentIngredients, error } = await this.supabase
+      .from('recipe_ingredients')
+      .select('ingredient_id')
+      .eq('recipe_id', recipeID);
+  
+    if (error) throw error;
+  
+    const ingredientsToRemove = currentIngredients
+      .map((row: any) => row.ingredient_id)
+      .filter((id: string) => !updatedIngredients.includes(id));
+  
+    if (ingredientsToRemove.length > 0) {
+      const { error: deleteError } = await this.supabase
+        .from('recipe_ingredients')
+        .delete()
+        .in('ingredient_id', ingredientsToRemove)
+        .eq('recipe_id', recipeID);
+  
+      if (deleteError) throw deleteError;
+    }
+  }
+  
+  async searchMeals(searchTerm: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('meals')  
+      .select('*')
+      .ilike('strMeal', `%${searchTerm}%`);
+  
+    if (error) {
+      console.error('Supabase search error:', error);
+      throw error;
+    }
+  
+    return data || [];
+  }
+
   getDataObservable<T>(
     table: string,
     search?: Object,
@@ -140,18 +217,41 @@ export class SupabaseService {
 
   /////// TODO Register, logout
 
+  register(email: string, password: string) {
+    return from(
+      this.supabase.auth.signUp({ email, password })
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) {
+          throw error;
+        }
+        return data;
+      })
+    );
+  }
+  
+  logout() {
+    return from(this.supabase.auth.signOut()).pipe(
+      tap(() => {
+        this.loggedSubject.next(false);
+        window.location.href = "/login"; 
+      })    
+    );
+  }
+  
+
   loggedSubject = new BehaviorSubject(false);
 
   async isLogged() {
-    //const { data, error } = await this.supabase.auth.refreshSession({ refresh_token: '1234' })
-
-    const {
-      data: { user },
-    } = await this.supabase.auth.getUser();
-    if (user) {
-      this.loggedSubject.next(true);
-    } else this.loggedSubject.next(false);
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        this.loggedSubject.next(true);
+      } else {
+        this.loggedSubject.next(false);
+      }
+    });
   }
+  
 
   getUserInfo(): Observable<User> {
     return from(this.supabase.auth.getUser()).pipe(
