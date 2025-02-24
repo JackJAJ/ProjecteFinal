@@ -1,35 +1,41 @@
-name: Desplegament Angular
+name: Desplegar Angular a la branca Main
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Obtindre el codi
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Configurar Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: |
-          cd exemples-dwec/09-angular/2425/myrecipes  # Move to correct directory
-          npm install
-
-      - name: Build Angular app
+      - name: Instal·lar dependències
         run: |
           cd exemples-dwec/09-angular/2425/myrecipes
-          npm run build -- --output-path=dist --base-href="/ProjecteFinal/"
+          npm install
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: exemples-dwec/09-angular/2425/myrecipes/dist
+      - name: Construir l'app Angular
+        run: |
+          cd exemples-dwec/09-angular/2425/myrecipes
+          npm run build -- --output-path=dist
+
+      - name: Pujar els fitxers construïts a Main
+        run: |
+          cd exemples-dwec/09-angular/2425/myrecipes
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist
+          git commit -m "Desplegant la última versió"
+          git push origin main
